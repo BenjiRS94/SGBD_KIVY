@@ -11,16 +11,33 @@ from kivy.core.window import Window
 
 
 from kivy.uix.textinput import TextInput
+from kivy.storage.jsonstore import JsonStore
 
+import json
 
 def randomRequest(item):
-	r = requests.get('https://opendata.somenergia.coop/v0.2/members/by/country/on/2018-10-01')
-	item.add_widget(Label(text=r.text))
+	r = requests.get('https://jsonplaceholder.typicode.com/posts')
+	r = r.json()
+	#aux = r['body']
+
+	item.add_widget(MainView(r))
+
+
+from kivy.uix.listview import ListView
+class MainView(ListView):
+    def __init__(self, r):
+        super(MainView, self).__init__(item_strings=
+        	[str(e['title']) for e in r]
+        )
+
 
 
 def randomFunction(item):
 	item.add_widget(Label(text=u'Specific Option Screen'))
 
+
+def randomForm(item):
+	item.add_widget(LoginScreen())
 
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
@@ -28,7 +45,7 @@ from kivy.clock import Clock
 class LoginScreen(GridLayout):
 
     def __init__(self, **kwargs):
-        Clock.schedule_interval(self.my_callback, 0.5)
+        Clock.schedule_interval(self.my_callback, 0.1)
 
         super(LoginScreen, self).__init__(**kwargs)
         self.cols = 2
@@ -39,16 +56,14 @@ class LoginScreen(GridLayout):
         self.password = TextInput(password=True, multiline=False)
         self.add_widget(self.password)
 
-        #self.button = DemoBox(usr=self.username.text, psw=self.password)
         self.button = DemoBox()
-        #self.button.myFunc(usr=self.username.text, psw=self.password)
         self.add_widget(self.button)
 
 
     def my_callback(self, a):
     	self.remove_widget(self.button)
     	self.button = DemoBox()
-    	self.button.myFunc(usr=self.username.text, psw=self.password)
+    	self.button.myFunc(usr=self.username.text, psw=self.password.text)
     	self.add_widget(self.button)
     	
 
@@ -82,21 +97,24 @@ class DemoBox(BoxLayout):
         print("callbock: y=", y)
 
 
+# TODO: Millorar-ho, aixo es un churro
+acordionMenu = {
+	'My profile' : randomRequest,
+	'Sell Object' : randomFunction,
+	'Find Object' : randomForm
+}
 
 class AccordionApp(App):
     def build(self):
         root = Accordion()
         root = Accordion(orientation='vertical')
         options = ['My profile', 'Sell Object', 'Find Objects']
-        for option in options:
-            item = AccordionItem(title='%s' % option)
-
-            item.add_widget(LoginScreen())
-
+        for key, value in acordionMenu.iteritems():
+            item = AccordionItem(title='%s' % key)
+            acordionMenu[key](item)
             root.add_widget(item)
 
         return root
-
 
 if __name__ == '__main__':
     AccordionApp().run()
